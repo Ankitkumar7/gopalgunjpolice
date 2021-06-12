@@ -15,7 +15,8 @@ const flash = require('express-flash');
 const path = require('path');
 const mongoose = require('mongoose');
 const passport = require('passport');
-const sass = require('node-sass-middleware');
+const cors = require('cors');
+
 const multer = require('multer');
 
 const upload = multer({ dest: path.join(__dirname, 'uploads') });
@@ -32,7 +33,7 @@ const homeController = require('./controllers/home');
 const userController = require('./controllers/user');
 const apiController = require('./controllers/api');
 const contactController = require('./controllers/contact');
-
+const Cases = require('./controllers/cases');
 /**
  * API keys and Passport configuration.
  */
@@ -42,7 +43,9 @@ const passportConfig = require('./config/passport');
  * Create Express server.
  */
 const app = express();
-
+app.use(cors({
+  origin: '*'
+}));
 /**
  * Connect to MongoDB.
  */
@@ -65,10 +68,7 @@ app.set('port', process.env.PORT || process.env.OPENSHIFT_NODEJS_PORT || 8080);
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'pug');
 app.use(compression());
-app.use(sass({
-  src: path.join(__dirname, 'public'),
-  dest: path.join(__dirname, 'public')
-}));
+
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -90,12 +90,11 @@ app.use((req, res, next) => {
     // Multer multipart/form-data handling needs to occur before the Lusca CSRF check.
     next();
   } else {
-    lusca.csrf()(req, res, next);
+    next();
   }
 });
-app.use(lusca.xframe('SAMEORIGIN'));
-app.use(lusca.xssProtection(true));
-app.disable('x-powered-by');
+app.use(lusca.xframe('*'));
+app.use(lusca.xssProtection(false));
 app.use((req, res, next) => {
   res.locals.user = req.user;
   next();
@@ -124,6 +123,8 @@ app.use('/webfonts', express.static(path.join(__dirname, 'node_modules/@fortawes
 /**
  * Primary app routes.
  */
+
+
 app.get('/', homeController.index);
 app.get('/login', userController.getLogin);
 app.post('/login', userController.postLogin);
@@ -143,6 +144,11 @@ app.post('/account/profile', passportConfig.isAuthenticated, userController.post
 app.post('/account/password', passportConfig.isAuthenticated, userController.postUpdatePassword);
 app.post('/account/delete', passportConfig.isAuthenticated, userController.postDeleteAccount);
 app.get('/account/unlink/:provider', passportConfig.isAuthenticated, userController.getOauthUnlink);
+
+// WORKFLOW API
+app.post('/workflow/chargesheet', Cases.postLogin)
+app.get('/workflow/getchargesheet', Cases.getChargeSheet)
+
 
 /**
  * API examples routes.

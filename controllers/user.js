@@ -7,6 +7,8 @@ const _ = require('lodash');
 const validator = require('validator');
 const mailChecker = require('mailchecker');
 const User = require('../models/User');
+const sgMail = require('@sendgrid/mail');
+const { resolve } = require('path');
 
 const randomBytesAsync = promisify(crypto.randomBytes);
 
@@ -15,6 +17,7 @@ const randomBytesAsync = promisify(crypto.randomBytes);
  */
 const sendMail = (settings) => {
   let transportConfig;
+  process.env.SENDGRID_API_KEY = "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"
   if (process.env.SENDGRID_API_KEY) {
     transportConfig = nodemailerSendgrid({
       apiKey: process.env.SENDGRID_API_KEY
@@ -56,7 +59,7 @@ const sendMail = (settings) => {
  */
 exports.getLogin = (req, res) => {
   if (req.user) {
-    return res.redirect('/');
+    res.status(200).send({ msg: 'Success! You are logged in.' })
   }
   res.render('account/login', {
     title: 'Login'
@@ -77,18 +80,12 @@ exports.postLogin = (req, res, next) => {
     return res.redirect('/login');
   }
   req.body.email = validator.normalizeEmail(req.body.email, { gmail_remove_dots: false });
-
   passport.authenticate('local', (err, user, info) => {
-    if (err) { return next(err); }
-    if (!user) {
-      req.flash('errors', info);
-      return res.redirect('/login');
+    if(!user) {
+      res.status(400).send({ msg: 'Error! You are not logged in.' })
+    } else {
+      res.status(200).send({ msg: 'Success! You are logged in.',  user: user })
     }
-    req.logIn(user, (err) => {
-      if (err) { return next(err); }
-      req.flash('success', { msg: 'Success! You are logged in.' });
-      res.redirect(req.session.returnTo || '/');
-    });
   })(req, res, next);
 };
 
@@ -123,6 +120,7 @@ exports.getSignup = (req, res) => {
  * Create a new local account.
  */
 exports.postSignup = (req, res, next) => {
+  console.log("I M HERE");
   const validationErrors = [];
   if (!validator.isEmail(req.body.email)) validationErrors.push({ msg: 'Please enter a valid email address.' });
   if (!validator.isLength(req.body.password, { min: 8 })) validationErrors.push({ msg: 'Password must be at least 8 characters long' });
@@ -136,14 +134,14 @@ exports.postSignup = (req, res, next) => {
 
   const user = new User({
     email: req.body.email,
-    password: req.body.password
+    password: req.body.password,
+    fullname: req.body.fullname
   });
 
   User.findOne({ email: req.body.email }, (err, existingUser) => {
     if (err) { return next(err); }
     if (existingUser) {
-      req.flash('errors', { msg: 'Account with that email address already exists.' });
-      return res.redirect('/signup');
+      res.status(404).send({ msg: 'Account with that email address already exists.' })
     }
     user.save((err) => {
       if (err) { return next(err); }
@@ -151,7 +149,7 @@ exports.postSignup = (req, res, next) => {
         if (err) {
           return next(err);
         }
-        res.redirect('/');
+        res.status(200).send({ msg: 'Registration Successfully Done', user: user })
       });
     });
   });
@@ -484,11 +482,11 @@ exports.getForgot = (req, res) => {
  */
 exports.postForgot = (req, res, next) => {
   const validationErrors = [];
-  if (!validator.isEmail(req.body.email)) validationErrors.push({ msg: 'Please enter a valid email address.' });
+  if (!validator.isEmail(req.body.email)) res.status(400).send({ msg: 'Please enter a valid email address.' });
 
   if (validationErrors.length) {
-    req.flash('errors', validationErrors);
-    return res.redirect('/forgot');
+    res.status(400).send({ msg: 'Please enter a valid email address.' })
+    
   }
   req.body.email = validator.normalizeEmail(req.body.email, { gmail_remove_dots: false });
 
@@ -499,43 +497,80 @@ exports.postForgot = (req, res, next) => {
     User
       .findOne({ email: req.body.email })
       .then((user) => {
-        if (!user) {
-          req.flash('errors', { msg: 'Account with that email address does not exist.' });
+        if (!user ) {
+           res.status(404).send({error:'Account with that email address does not exist.'})
         } else {
           user.passwordResetToken = token;
           user.passwordResetExpires = Date.now() + 3600000; // 1 hour
           user = user.save();
+          return user;
         }
-        return user;
+     
       });
 
   const sendForgotPasswordEmail = (user) => {
     if (!user) { return; }
     const token = user.passwordResetToken;
-    const mailOptions = {
-      to: user.email,
-      from: 'hackathon@starter.com',
-      subject: 'Reset your password on Hackathon Starter',
-      text: `You are receiving this email because you (or someone else) have requested the reset of the password for your account.\n\n
-        Please click on the following link, or paste this into your browser to complete the process:\n\n
-        http://${req.headers.host}/reset/${token}\n\n
-        If you did not request this, please ignore this email and your password will remain unchanged.\n`
+    // const mailOptions = {
+    //   to: user.email,
+    //   from: 'ankit.kumar.cs@outlook.com',
+    //   subject: 'Reset your password on Hackathon Starter',
+    //   text: `You are receiving this email because you (or someone else) have requested the reset of the password for your account.\n\n
+    //     Please click on the following link, or paste this into your browser to complete the process:\n\n
+    //     http://${req.headers.host}/reset/${token}\n\n
+    //     If you did not request this, please ignore this email and your password will remain unchanged.\n`
+    // };
+    // const mailSettings = {
+    //   successfulType: 'info',
+    //   successfulMsg: `An e-mail has been sent to ${user.email} with further instructions.`,
+    //   loggingError: 'ERROR: Could not send forgot password email after security downgrade.\n',
+    //   errorType: 'errors',
+    //   errorMsg: 'Error sending the password reset message. Please try again shortly.',
+    //   mailOptions,
+    //   req
+    // };
+    // return sendMail(mailSettings);
+    console.log(user.email);
+    var mail = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: 'anki.kr7693@gmail.com',
+        pass: 'Ankit4265@'
+      }
+    });
+
+    var mailOptions = {
+    to: user.email,
+    from: 'anki.kr7693@gmail.com',
+    subject: 'Reset your password on Hackathon Starter',
+    text: `You are receiving this email because you (or someone else) have requested the reset of the password for your account.\n\n
+      Please click on the following link, or paste this into your browser to complete the process:\n\n
+      http://${req.headers.host}/reset/${token}\n\n
+      If you did not request this, please ignore this email and your password will remain unchanged.\n`
     };
-    const mailSettings = {
-      successfulType: 'info',
-      successfulMsg: `An e-mail has been sent to ${user.email} with further instructions.`,
-      loggingError: 'ERROR: Could not send forgot password email after security downgrade.\n',
-      errorType: 'errors',
-      errorMsg: 'Error sending the password reset message. Please try again shortly.',
-      mailOptions,
-      req
-    };
-    return sendMail(mailSettings);
+    
+    mail.sendMail(mailOptions, function(error, info){
+      if (error) {
+        console.log(error);
+      } else {
+        
+      }
+    });
+    // const msg = {
+    //   to: "sanchay081@gmail.com",
+    //   from: 'ankit.kumar.cs@outlook.com',
+    //   subject: 'Reset your password on Hackathon Starter',
+    //   text: `You are receiving this email because you (or someone else) have requested the reset of the password for your account.\n\n
+    //   Please click on the following link, or paste this into your browser to complete the process:\n\n
+    //   http://${req.headers.host}/reset/${token}\n\n
+    //   If you did not request this, please ignore this email and your password will remain unchanged.\n`
+    // }
+    
   };
 
   createRandomToken
     .then(setRandomToken)
     .then(sendForgotPasswordEmail)
-    .then(() => res.redirect('/forgot'))
+    .then(() => res.status(404).send({ msg: `Please check your email for reset password.` }))
     .catch(next);
 };

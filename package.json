@@ -1,26 +1,28 @@
 {
-  "name": "hackathon-starter",
-  "version": "6.1.0",
-  "description": "A boilerplate for Node.js web applications",
+  "name": "gopalgunjpolice-server",
+  "version": "0.0.1",
+  "description": "Server Side For Application",
   "repository": {
     "type": "git",
-    "url": "https://github.com/sahat/hackathon-starter.git"
+    "url": ""
   },
-  "license": "MIT",
-  "author": "Sahat Yalkabov",
+  "license": "GOPALGUNJ",
+  "author": "Ankit Kumar",
   "contributors": [
-    "Yashar Fakhari (https://github.com/YasharF)"
+    "Ankit Kumar",
+    "Naresh Kumar (DSP, HATHUA)"
   ],
   "scripts": {
     "postinstall": "npm rebuild node-sass",
     "start": "node app.js",
-    "test": "nyc mocha --timeout=10000 --exit",
+    "test": "nyc mocha --timeout=10000 --eclsxit",
     "lint": "eslint \"**/*.js\""
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^5.15.2",
     "@ladjs/bootstrap-social": "^7.0.2",
     "@octokit/rest": "^18.0.12",
+    "@sendgrid/mail": "^6.5.5",
     "axios": "^0.21.1",
     "bcrypt": "^5.0.0",
     "body-parser": "^1.19.0",
@@ -30,6 +32,7 @@
     "cheerio": "^1.0.0-rc.3",
     "compression": "^1.7.4",
     "connect-mongo": "^3.2.0",
+    "cors": "^2.8.5",
     "dotenv": "^8.2.0",
     "errorhandler": "^1.5.1",
     "express": "^4.17.1",
@@ -49,9 +52,7 @@
     "morgan": "^1.10.0",
     "multer": "^1.4.2",
     "node-quickbooks": "^2.0.37",
-    "node-sass": "^5.0.0",
-    "node-sass-middleware": "^0.11.0",
-    "nodemailer": "^6.4.17",
+    "nodemailer": "^6.6.1",
     "nodemailer-sendgrid": "^1.0.3",
     "passport": "^0.4.1",
     "passport-facebook": "^3.0.0",
