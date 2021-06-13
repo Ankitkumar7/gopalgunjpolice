@@ -534,8 +534,8 @@ exports.postForgot = (req, res, next) => {
     var mail = nodemailer.createTransport({
       service: 'gmail',
       auth: {
-        user: 'anki.kr7693@gmail.com',
-        pass: 'Ankit4265@'
+        user: 'gopalgunj.police@gmail.com',
+        pass: 'Naresh4265@'
       }
     });
 
