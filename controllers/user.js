@@ -76,6 +76,7 @@ exports.postLogin = (req, res, next) => {
   if (validator.isEmpty(req.body.password)) validationErrors.push({ msg: 'Password cannot be blank.' });
   if (validationErrors.length) {
     res.status(400).send({ msg: 'Error! Please check your credentials' })
+    return;
   }
   req.body.email = validator.normalizeEmail(req.body.email, { gmail_remove_dots: false });
   passport.authenticate('local', (err, user, info) => {
