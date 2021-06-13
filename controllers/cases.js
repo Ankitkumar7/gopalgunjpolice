@@ -18,4 +18,11 @@ exports.getChargeSheet = (req, res, next) => {
     })
 };
 
+exports.removeItem = (req, res, next) => {
+    const document = req.query.id;
+    Cases.findByIdAndRemove({_id: document}, function(err,data) {
+        res.status(200).send({ msg: 'Successfully Removed'})
+    })
+};
+
  

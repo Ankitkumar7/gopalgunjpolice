@@ -148,7 +148,7 @@ app.get('/account/unlink/:provider', passportConfig.isAuthenticated, userControl
 // WORKFLOW API
 app.post('/workflow/chargesheet', Cases.postLogin)
 app.get('/workflow/getchargesheet', Cases.getChargeSheet)
-
+app.get('/workflow/removeitem', Cases.removeItem)
 
 /**
  * API examples routes.
