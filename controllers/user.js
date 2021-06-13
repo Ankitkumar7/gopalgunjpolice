@@ -74,15 +74,13 @@ exports.postLogin = (req, res, next) => {
   const validationErrors = [];
   if (!validator.isEmail(req.body.email)) validationErrors.push({ msg: 'Please enter a valid email address.' });
   if (validator.isEmpty(req.body.password)) validationErrors.push({ msg: 'Password cannot be blank.' });
-
   if (validationErrors.length) {
-    req.flash('errors', validationErrors);
-    return res.redirect('/login');
+    res.status(400).send({ msg: 'Error! Please check your credentials' })
   }
   req.body.email = validator.normalizeEmail(req.body.email, { gmail_remove_dots: false });
   passport.authenticate('local', (err, user, info) => {
     if(!user) {
-      res.status(400).send({ msg: 'Error! You are not logged in.' })
+      res.status(400).send({ msg: 'Error! Please check your credentials' })
     } else {
       res.status(200).send({ msg: 'Success! You are logged in.',  user: user })
     }
