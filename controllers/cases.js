@@ -1,6 +1,6 @@
 
 const Cases = require('../models/cases')
-
+const User = require('../models/User')
 exports.postLogin = (req, res, next) => {
     const document = req.body;
     var cases = new Cases(document)
@@ -13,8 +13,17 @@ exports.postLogin = (req, res, next) => {
 exports.getChargeSheet = (req, res, next) => {
     const document = req.query.email;
     const type = req.query.type;
-    Cases.find({email: document, type: type}, function(err,data) {
-        res.status(200).send({ data:  data})
+     User.findOne({email: document}, function(err, user){
+        console.log(user)
+        if(user && user.role === 'admin') {
+            Cases.find({type: type}, function(err,data) {
+                res.status(200).send({ data:  data})
+            })
+        } else {
+            Cases.find({email: document, type: type}, function(err,data) {
+                res.status(200).send({ data:  data})
+            })
+        }
     })
 };
 
