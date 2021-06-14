@@ -1,0 +1,11 @@
+---
+application:
+  name: "gopalgunjpolice"
+  project: "gopalganj-police"
+  organization: "QoveryCommunity"
+routers:
+- name: "main-gopalgunjpolice"
+  routes:
+  - application_name: "gopalgunjpolice"
+    paths:
+    - "/*"
